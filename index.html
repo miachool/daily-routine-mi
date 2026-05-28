@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="每日一句">
+<meta name="theme-color" content="#1a1a2e">
+<title>每日一句</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=Noto+Sans+TC:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f1a;
+    --surface: #1a1a2e;
+    --card: #16213e;
+    --accent-pos: #f7c59f;
+    --accent-neg: #7eb8f7;
+    --text: #f0ede8;
+    --text-dim: #a09890;
+    --border: rgba(255,255,255,0.08);
+    --shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans TC', sans-serif;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 0 40px;
+    overflow-x: hidden;
+  }
+
+  /* Background decoration */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -30vh;
+    left: -20vw;
+    width: 80vw;
+    height: 80vw;
+    background: radial-gradient(circle, rgba(247,197,159,0.06) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -20vh;
+    right: -20vw;
+    width: 70vw;
+    height: 70vw;
+    background: radial-gradient(circle, rgba(126,184,247,0.06) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 480px;
+    padding: 0 20px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  header {
+    text-align: center;
+    padding: 48px 0 24px;
+  }
+  header .date-label {
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  header h1 {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--text);
+  }
+  .dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-pos);
+    vertical-align: middle;
+    margin: 0 6px 2px;
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100%{opacity:1;transform:scale(1)}
+    50%{opacity:.4;transform:scale(0.7)}
+  }
+
+  /* Main quote card */
+  .quote-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 36px 28px 28px;
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.15s ease;
+  }
+  .quote-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent-pos), var(--accent-neg));
+    border-radius: 24px 24px 0 0;
+  }
+  .energy-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+    font-weight: 400;
+  }
+  .energy-badge.positive {
+    background: rgba(247,197,159,0.12);
+    color: var(--accent-pos);
+    border: 1px solid rgba(247,197,159,0.2);
+  }
+  .energy-badge.negative {
+    background: rgba(126,184,247,0.12);
+    color: var(--accent-neg);
+    border: 1px solid rgba(126,184,247,0.2);
+  }
+  .quote-text {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 21px;
+    line-height: 1.75;
+    font-weight: 400;
+    color: var(--text);
+    margin-bottom: 16px;
+    min-height: 80px;
+    transition: opacity 0.3s ease;
+  }
+  .quote-text.fading { opacity: 0; }
+  .quote-author {
+    font-size: 13px;
+    color: var(--text-dim);
+    text-align: right;
+    min-height: 18px;
+  }
+
+  /* Section label */
+  .section-label {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    padding-left: 4px;
+  }
+
+  /* Buttons */
+  .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 16px;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: transform 0.12s ease, opacity 0.12s ease, background 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn:active { transform: scale(0.96); }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #f7c59f22, #7eb8f722);
+    border: 1px solid var(--border);
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+  .btn-primary:hover { background: linear-gradient(135deg, #f7c59f33, #7eb8f733); }
+
+  .btn-today {
+    background: rgba(247,197,159,0.1);
+    border: 1px solid rgba(247,197,159,0.2);
+    color: var(--accent-pos);
+    margin-bottom: 20px;
+  }
+  .btn-today:hover { background: rgba(247,197,159,0.15); }
+
+  /* Add quote section */
+  .add-section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 22px 20px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+  }
+  .add-section textarea {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    font-family: 'Noto Serif TC', serif;
+    font-size: 16px;
+    line-height: 1.65;
+    padding: 14px 16px;
+    resize: none;
+    outline: none;
+    margin-bottom: 10px;
+    transition: border-color 0.2s;
+  }
+  .add-section textarea:focus { border-color: rgba(247,197,159,0.4); }
+  .add-section textarea::placeholder { color: var(--text-dim); font-size: 14px; }
+  .add-section input[type="text"] {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 14px;
+    padding: 11px 16px;
+    outline: none;
+    margin-bottom: 10px;
+    transition: border-color 0.2s;
+  }
+  .add-section input[type="text"]:focus { border-color: rgba(247,197,159,0.4); }
+  .add-section input::placeholder { color: var(--text-dim); }
+  .energy-toggle {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .toggle-btn {
+    flex: 1;
+    padding: 9px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-family: 'Noto Sans TC', sans-serif;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .toggle-btn.active-pos {
+    background: rgba(247,197,159,0.15);
+    border-color: rgba(247,197,159,0.35);
+    color: var(--accent-pos);
+  }
+  .toggle-btn.active-neg {
+    background: rgba(126,184,247,0.15);
+    border-color: rgba(126,184,247,0.35);
+    color: var(--accent-neg);
+  }
+  .btn-add {
+    background: linear-gradient(135deg, rgba(247,197,159,0.2), rgba(126,184,247,0.2));
+    border: 1px solid rgba(255,255,255,0.12);
+    color: var(--text);
+  }
+  .btn-add:hover { opacity: 0.85; }
+
+  /* Quote list */
+  .list-section {
+    margin-bottom: 20px;
+  }
+  .quote-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .quote-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px 16px 14px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+    animation: slideIn 0.3s ease;
+  }
+  @keyframes slideIn {
+    from { opacity:0; transform: translateY(8px); }
+    to { opacity:1; transform: translateY(0); }
+  }
+  .quote-item-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-top: 6px;
+    flex-shrink: 0;
+  }
+  .quote-item-dot.pos { background: var(--accent-pos); }
+  .quote-item-dot.neg { background: var(--accent-neg); }
+  .quote-item-content { flex: 1; min-width: 0; }
+  .quote-item-text {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--text);
+    word-break: break-all;
+    margin-bottom: 4px;
+  }
+  .quote-item-author {
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .quote-item-tag {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 8px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .tag-user {
+    background: rgba(255,255,255,0.06);
+    color: var(--text-dim);
+  }
+  .btn-delete {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0 2px;
+    opacity: 0.5;
+    transition: opacity 0.15s;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+    line-height: 1;
+  }
+  .btn-delete:hover { opacity: 1; color: #f78f8f; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #2a2a3e;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 22px;
+    border-radius: 30px;
+    font-size: 13px;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    z-index: 999;
+    white-space: nowrap;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Divider */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 20px 0;
+  }
+
+  .empty-hint {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 13px;
+    padding: 20px;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="date-label" id="dateLabel"></div>
+    <h1>每日一句<span class="dot"></span></h1>
+  </header>
+
+  <!-- Today's quote card -->
+  <div class="quote-card" id="quoteCard">
+    <div class="energy-badge" id="energyBadge">✦ 正能量</div>
+    <div class="quote-text" id="quoteText"></div>
+    <div class="quote-author" id="quoteAuthor"></div>
+  </div>
+
+  <button class="btn btn-primary" onclick="drawRandom()">
+    🎲 再抽一句
+  </button>
+  <button class="btn btn-today" onclick="showToday()">
+    📅 回到今日語錄
+  </button>
+
+  <div class="divider"></div>
+
+  <!-- Add quote section -->
+  <div class="section-label">新增語錄</div>
+  <div class="add-section">
+    <textarea id="newQuoteText" rows="3" placeholder="輸入你想收藏的句子…"></textarea>
+    <input type="text" id="newQuoteAuthor" placeholder="作者 / 來源（選填）">
+    <div class="energy-toggle">
+      <button class="toggle-btn active-pos" id="togglePos" onclick="setEnergy('positive')">☀️ 正能量</button>
+      <button class="toggle-btn" id="toggleNeg" onclick="setEnergy('negative')">🌙 負能量</button>
+    </div>
+    <button class="btn btn-add" onclick="addQuote()">＋ 新增句子</button>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- All quotes list -->
+  <div class="section-label">全部語錄</div>
+  <div class="list-section">
+    <div class="quote-list" id="quoteList"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Built-in quotes ──────────────────────────────────────────
+const BUILT_IN = [
+  { text: "你所浪費的今天，是昨天死去的人奢望的明天。", author: "佚名", energy: "positive" },
+  { text: "不是因為有希望才去堅持，而是因為堅持才會有希望。", author: "佚名", energy: "positive" },
+  { text: "每一個你不喜歡的現在，都有一個你沒有努力的曾經。", author: "佚名", energy: "positive" },
+  { text: "生命中最偉大的光輝不在於永不墜落，而是墜落後總能再度升起。", author: "曼德拉", energy: "positive" },
+  { text: "把每一個平淡的日子，都過成詩。", author: "佚名", energy: "positive" },
+  { text: "你比你想像的更勇敢，比你看起來更強壯，也比你以為的更聰明。", author: "小熊維尼", energy: "positive" },
+  { text: "世界上只有一種英雄主義，就是在認清生活真相之後依然熱愛生活。", author: "羅曼·羅蘭", energy: "positive" },
+  { text: "人生沒有彩排，每天都是直播。", author: "佚名", energy: "positive" },
+  { text: "你永遠無法叫醒一個裝睡的人。", author: "佚名", energy: "negative" },
+  { text: "我們最大的恐懼，不是我們不夠好，而是我們強大得超乎想像。", author: "尼爾森·曼德拉", energy: "negative" },
+  { text: "有些人死了，他還活著；有些人活著，他已經死了。", author: "臧克家", energy: "negative" },
+  { text: "孤獨不是一種懲罰，而是一種禮物——給那些懂得享受自己陪伴的人。", author: "佚名", energy: "negative" },
+  { text: "有時候，沉默是最響亮的吶喊。", author: "佚名", energy: "negative" },
+  { text: "我們都是帶傷上陣的人，只是傷口不同罷了。", author: "佚名", energy: "negative" },
+  { text: "最深的孤獨，是在人群中找不到自己的影子。", author: "佚名", energy: "negative" },
+];
+
+const STORAGE_KEY = 'dailyQuote_v1';
+
+// ── State ───────────────────────────────────────────────────
+let state = { userQuotes: [], currentEnergy: 'positive', currentIdx: null };
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) state = { ...state, ...JSON.parse(raw) };
+  } catch(e) {}
+}
+
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+function allQuotes() {
+  return [
+    ...BUILT_IN,
+    ...state.userQuotes.map(q => ({ ...q, isUser: true }))
+  ];
+}
+
+// ── Date helpers ─────────────────────────────────────────────
+function todayString() {
+  const d = new Date();
+  return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+}
+
+function todayIndex() {
+  const all = allQuotes();
+  const seed = todayString().split('').reduce((a,c) => a + c.charCodeAt(0), 0);
+  return seed % all.length;
+}
+
+function formatDate(d) {
+  const days = ['日','一','二','三','四','五','六'];
+  return `${d.getFullYear()} 年 ${d.getMonth()+1} 月 ${d.getDate()} 日　星期${days[d.getDay()]}`;
+}
+
+// ── Audio ────────────────────────────────────────────────────
+let audioCtx;
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playSound(type) {
+  try {
+    const ctx = getAudioCtx();
+    if (ctx.state === 'suspended') ctx.resume();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    if (type === 'draw') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(520, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(780, ctx.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.18, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+      osc.start(); osc.stop(ctx.currentTime + 0.26);
+    } else if (type === 'add') {
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(440, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(660, ctx.currentTime + 0.08);
+      gain.gain.setValueAtTime(0.2, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+      osc.start(); osc.stop(ctx.currentTime + 0.31);
+    } else if (type === 'delete') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(300, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.1, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+      osc.start(); osc.stop(ctx.currentTime + 0.21);
+    } else if (type === 'today') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(660, ctx.currentTime);
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.22);
+      osc.start(); osc.stop(ctx.currentTime + 0.23);
+    }
+  } catch(e) {}
+}
+
+// ── Display ──────────────────────────────────────────────────
+function displayQuote(idx) {
+  state.currentIdx = idx;
+  const all = allQuotes();
+  const q = all[idx];
+  if (!q) return;
+
+  const textEl = document.getElementById('quoteText');
+  const badge = document.getElementById('energyBadge');
+  const author = document.getElementById('quoteAuthor');
+
+  textEl.classList.add('fading');
+  setTimeout(() => {
+    textEl.textContent = q.text;
+    author.textContent = q.author ? `—— ${q.author}` : '';
+    badge.textContent = q.energy === 'positive' ? '✦ 正能量' : '✧ 負能量';
+    badge.className = 'energy-badge ' + (q.energy === 'positive' ? 'positive' : 'negative');
+    textEl.classList.remove('fading');
+  }, 180);
+}
+
+function showToday() {
+  playSound('today');
+  displayQuote(todayIndex());
+}
+
+function drawRandom() {
+  playSound('draw');
+  const all = allQuotes();
+  let idx;
+  do { idx = Math.floor(Math.random() * all.length); }
+  while (all.length > 1 && idx === state.currentIdx);
+  displayQuote(idx);
+}
+
+// ── Add / Delete ─────────────────────────────────────────────
+let selectedEnergy = 'positive';
+
+function setEnergy(type) {
+  selectedEnergy = type;
+  document.getElementById('togglePos').className = 'toggle-btn' + (type === 'positive' ? ' active-pos' : '');
+  document.getElementById('toggleNeg').className = 'toggle-btn' + (type === 'negative' ? ' active-neg' : '');
+}
+
+function addQuote() {
+  const text = document.getElementById('newQuoteText').value.trim();
+  const author = document.getElementById('newQuoteAuthor').value.trim();
+  if (!text) { showToast('請先輸入句子內容 ✏️'); return; }
+
+  playSound('add');
+  const q = { text, author, energy: selectedEnergy, id: Date.now() };
+  state.userQuotes.push(q);
+  saveState();
+
+  document.getElementById('newQuoteText').value = '';
+  document.getElementById('newQuoteAuthor').value = '';
+  renderList();
+  showToast('已新增句子 ✓');
+}
+
+function deleteQuote(id) {
+  playSound('delete');
+  state.userQuotes = state.userQuotes.filter(q => q.id !== id);
+  saveState();
+  renderList();
+  // If current display was this quote, go back to today
+  displayQuote(todayIndex());
+  showToast('已刪除 ✓');
+}
+
+function renderList() {
+  const list = document.getElementById('quoteList');
+  const all = allQuotes();
+
+  if (all.length === 0) {
+    list.innerHTML = '<div class="empty-hint">還沒有語錄</div>';
+    return;
+  }
+
+  list.innerHTML = all.map((q, i) => `
+    <div class="quote-item">
+      <div class="quote-item-dot ${q.energy === 'positive' ? 'pos' : 'neg'}"></div>
+      <div class="quote-item-content">
+        <div class="quote-item-text">${escHtml(q.text)}${q.isUser ? '<span class="quote-item-tag tag-user">自訂</span>' : ''}</div>
+        ${q.author ? `<div class="quote-item-author">—— ${escHtml(q.author)}</div>` : ''}
+      </div>
+      ${q.isUser ? `<button class="btn-delete" onclick="deleteQuote(${q.id})">✕</button>` : ''}
+    </div>
+  `).join('');
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Toast ────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ── Init ─────────────────────────────────────────────────────
+function init() {
+  loadState();
+  document.getElementById('dateLabel').textContent = formatDate(new Date());
+  displayQuote(todayIndex());
+  renderList();
+}
+
+init();
+</script>
+</body>
+</html>
